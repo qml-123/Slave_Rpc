@@ -27,6 +27,8 @@ set(LIB_LIB
         rpc
         pthread
         thrift
+        thriftnb
+        event
         )
 
 add_executable(slave_server gen-cpp/Slave_server.cpp)
