@@ -10,7 +10,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 include_directories(.)
 include_directories(/usr/include)
+include_directories(/usr/include/mysql)
 link_directories(/usr/lib)
+link_directories(/usr/lib/mysql)
 
 set(LIB_SRC
         gen-cpp/Master.cpp
@@ -19,6 +21,10 @@ set(LIB_SRC
         gen-cpp/Slave.cpp
         gen-cpp/slave_types.cpp
         gen-cpp/slave_constants.cpp
+        db/mysql_client.cpp
+        db/mysql_rsync.cpp
+        conf/conf.cpp
+        conf/dbconf.cpp
         )
 
 add_library(rpc SHARED ${LIB_SRC})
@@ -29,6 +35,7 @@ set(LIB_LIB
         thrift
         thriftnb
         event
+        mysqlclient
         )
 
 add_executable(slave_server gen-cpp/Slave_server.cpp)

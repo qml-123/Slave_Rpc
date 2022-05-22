@@ -2,7 +2,10 @@
 // You should copy it to another filename to avoid overwriting it.
 
 #include "Slave.h"
+#include "../db/mysql_rsync.h"
+#include "../db/mysql_client.h"
 #include <iostream>
+#include <memory>
 #include <thrift/protocol/TBinaryProtocol.h>
 
 #include <thrift/server/TSimpleServer.h>
@@ -23,8 +26,10 @@ using namespace ::apache::thrift::transport;
 using namespace ::apache::thrift::server;
 using namespace ::apache::thrift::concurrency;
 
-using namespace  ::rpc::slave;
+using namespace ::rpc::db;
+using namespace ::rpc::slave;
 
+//slave
 class SlaveHandler : virtual public SlaveIf {
 public:
     SlaveHandler() {
@@ -34,26 +39,49 @@ public:
     void Rsync(RsyncResponse& _return, const RsyncRequest& RsyncRequest) {
         // Your implementation goes here
         printf("Rsync\n");
+        mysql_rsync::set_sql(RsyncRequest.sql_file, RsyncRequest.database);
+        _return.message = "success";
     }
-    
+
+    //这里写两阶段提交的准备阶段
     void Try(TryResponse& _return, const TryRequest& tryRequest) {
         // Your implementation goes here
+        printf("%s\n",tryRequest.key.c_str());
         printf("Try\n");
     }
     
-    void Get( ::rpc::master::GetResponse& _return, const  ::rpc::master::GetRequest& getRequest) {
+    void Get(::rpc::master::GetResponse& _return, const  ::rpc::master::GetRequest& getRequest) {
         // Your implementation goes here
         printf("Get\n");
+        std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
+        std::string value = mysql_client->get(getRequest.key);
+        if (value == "") {
+            _return.message = "fail";
+        } else {
+            _return.message = "success";
+            _return.value = value;
+        }
     }
     
-    void Set( ::rpc::master::SetResponse& _return, const  ::rpc::master::SetRequest& setRequest) {
+    void Set(::rpc::master::SetResponse& _return, const  ::rpc::master::SetRequest& setRequest) {
         // Your implementation goes here
         printf("Set\n");
+        std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
+        if (mysql_client->put(setRequest.key, setRequest.value)) {
+            _return.message = "fail";
+        } else {
+            _return.message = "success";
+        }
     }
     
-    void Del( ::rpc::master::DelResponse& _return, const  ::rpc::master::DelRequest& delRequest) {
+    void Del(::rpc::master::DelResponse& _return, const  ::rpc::master::DelRequest& delRequest) {
         // Your implementation goes here
-        printf("Del\n");
+        std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
+        if (mysql_client->del(delRequest.key)) {
+            _return.message = "fail";
+        } else {
+            _return.message = "success";
+        }
     }
     
 };
@@ -71,6 +99,7 @@ int main(int argc, char **argv) {
     threadManager->start();
     
     TNonblockingServer server(processor, protocolFactory, serverTransport, threadManager);
+    server.setNumIOThreads(5);//设置处理连接请求线程数
     server.serve();
     return 0;
 }
