@@ -26,7 +26,7 @@ namespace rpc {namespace db{
             }
             
             MYSQL_ROW get_row() {return row;}
-    
+        
         private:
             MYSQL_RES* _res;
             MYSQL_ROW row;
@@ -36,18 +36,26 @@ namespace rpc {namespace db{
         public:
             Mysql_Base();
             ~Mysql_Base();
+            int begin();
+            int rollback();
+            int commit();
+            int save_point(std::string savepoint);
+            int delete_savepoint(std::string savepoint);
+            int exec(std::string func);
         
         protected:
             int connect();  //1 fail  0 success
             int query(std::string sql);    //1 fail  0 success
-            int rollback();
+            
             MYSQL* get_con() {return &con;}
+        
         private:
             MYSQL con;
         };
         
         class MysqlClient : public Mysql_Base {
         public:
+            int check_key(std::string key);           //1 就绪  0不就绪，无法操作
             int put(std::string key, std::string value);
             std::string get(std::string key);
             int del(std::string key);

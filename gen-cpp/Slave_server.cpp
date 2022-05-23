@@ -6,6 +6,8 @@
 #include "../db/mysql_client.h"
 #include <iostream>
 #include <memory>
+#include <map>
+#include <unordered_map>
 #include <thrift/protocol/TBinaryProtocol.h>
 
 #include <thrift/server/TSimpleServer.h>
@@ -20,6 +22,7 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/PosixThreadFactory.h>
 
+
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
@@ -28,6 +31,8 @@ using namespace ::apache::thrift::concurrency;
 
 using namespace ::rpc::db;
 using namespace ::rpc::slave;
+
+std::unordered_map<long long, std::shared_ptr<MysqlClient>> ConId_Client_map;
 
 //slave
 class SlaveHandler : virtual public SlaveIf {
@@ -46,13 +51,16 @@ public:
     //这里写两阶段提交的准备阶段
     void Try(TryResponse& _return, const TryRequest& tryRequest) {
         // Your implementation goes here
-        printf("%s\n",tryRequest.key.c_str());
-        printf("Try\n");
+        std::cout << "Try begin" << std::endl;
+        std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
+        _return.check_key = mysql_client->check_key(tryRequest.key);
+        std::cout << "Try, key=" << (tryRequest.key) << " " << (_return.check_key ? "exist" : "not exist") << std::endl;
+        std::cout << std::endl;
     }
     
     void Get(::rpc::master::GetResponse& _return, const  ::rpc::master::GetRequest& getRequest) {
         // Your implementation goes here
-        printf("Get\n");
+        std::cout << "Get begin" << std::endl;
         std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
         std::string value = mysql_client->get(getRequest.key);
         if (value == "") {
@@ -61,27 +69,63 @@ public:
             _return.message = "success";
             _return.value = value;
         }
+        std::cout << "Get " << _return.message << std::endl;
+        std::cout << std::endl;
     }
     
     void Set(::rpc::master::SetResponse& _return, const  ::rpc::master::SetRequest& setRequest) {
         // Your implementation goes here
-        printf("Set\n");
+        std::cout << "Set key=" << setRequest.key << " value=" + setRequest.value << " begin" << std::endl;
         std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
+        mysql_client->begin();
+        _return.connection_id = 1;
         if (mysql_client->put(setRequest.key, setRequest.value)) {
             _return.message = "fail";
         } else {
             _return.message = "success";
         }
+        ConId_Client_map[1] = mysql_client;
+        mysql_client.reset();
+        std::cout << "Set " << _return.message << std::endl;
+        std::cout << std::endl;
     }
     
     void Del(::rpc::master::DelResponse& _return, const  ::rpc::master::DelRequest& delRequest) {
         // Your implementation goes here
+        std::cout << "Del key=" + delRequest.key + " begin" << std::endl;
         std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
+        mysql_client->begin();
+        _return.connection_id = 1;
         if (mysql_client->del(delRequest.key)) {
             _return.message = "fail";
         } else {
             _return.message = "success";
         }
+        ConId_Client_map[1] = mysql_client;
+        mysql_client.reset();
+        std::cout << "Del " << _return.message << std::endl;
+        std::cout << std::endl;
+    }
+    
+    void Finish(FinishResponse& _return, const FinishRequest& finishRequest) {
+        // Your implementation goes here
+        std::cout << finishRequest.call_func << " " << finishRequest.connection_id << std::endl;
+        if (!ConId_Client_map.count(finishRequest.connection_id)) {
+            _return.message = "fail";
+            std::cout << "finish " << _return.message << std::endl;
+            std::cout << std::endl;
+            return;
+        }
+        std::shared_ptr<MysqlClient> mysql_client = ConId_Client_map[finishRequest.connection_id];
+        if (mysql_client->exec(finishRequest.call_func)) {
+            _return.message = "fail";
+        } else {
+            _return.message = "success";
+        }
+        ConId_Client_map[finishRequest.connection_id].reset();
+        ConId_Client_map.erase(finishRequest.connection_id);
+        std::cout << "finish " << _return.message << std::endl;
+        std::cout << std::endl;
     }
     
 };
