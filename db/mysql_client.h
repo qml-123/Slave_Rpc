@@ -35,7 +35,7 @@ namespace rpc {namespace db{
         class Mysql_Base {
         public:
             Mysql_Base();
-            ~Mysql_Base();
+            virtual ~Mysql_Base();
             int begin();
             int rollback();
             int commit();
@@ -59,7 +59,6 @@ namespace rpc {namespace db{
             int put(std::string key, std::string value);
             std::string get(std::string key);
             int del(std::string key);
-            
         };
     }
 }

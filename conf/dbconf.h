@@ -13,6 +13,7 @@ namespace rpc{ namespace conf { namespace db {
         static std::string table_name;
         static std::string user_name;
         static std::string password;
+        static int mysql_client_count;
     private:
         MysqlConf();
         MysqlConf(const MysqlConf&);

@@ -25,6 +25,10 @@ set(LIB_SRC
         db/mysql_rsync.cpp
         conf/conf.cpp
         conf/dbconf.cpp
+        thread/mutex.cpp
+        thread/thread.cpp
+        thread/threadpool.cpp
+        thread/threadgroup.cpp
         )
 
 add_library(rpc SHARED ${LIB_SRC})
@@ -41,3 +45,7 @@ set(LIB_LIB
 add_executable(slave_server gen-cpp/Slave_server.cpp)
 add_dependencies(slave_server rpc)
 target_link_libraries(slave_server rpc ${LIB_LIB})
+
+add_executable(threadgroup_test thread/threadgroup_test.cpp)
+add_dependencies(threadgroup_test rpc)
+target_link_libraries(threadgroup_test rpc ${LIB_LIB})

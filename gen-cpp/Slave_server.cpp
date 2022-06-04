@@ -4,9 +4,11 @@
 #include "Slave.h"
 #include "../db/mysql_rsync.h"
 #include "../db/mysql_client.h"
+#include "../db/mysql_client_pool.h"
 #include <iostream>
 #include <memory>
 #include <map>
+#include <unistd.h>
 #include <unordered_map>
 #include <thrift/protocol/TBinaryProtocol.h>
 
@@ -33,6 +35,7 @@ using namespace ::rpc::db;
 using namespace ::rpc::slave;
 
 std::unordered_map<long long, std::shared_ptr<MysqlClient>> ConId_Client_map;
+std::map<long long, std::list<std::shared_ptr<MysqlClient>>::iterator > ConId_Iterator_map;
 
 //slave
 class SlaveHandler : virtual public SlaveIf {
@@ -56,12 +59,15 @@ public:
         _return.check_key = mysql_client->check_key(tryRequest.key);
         std::cout << "Try, key=" << (tryRequest.key) << " " << (_return.check_key ? "exist" : "not exist") << std::endl;
         std::cout << std::endl;
+        
+//        sleep(10);
     }
     
     void Get(::rpc::master::GetResponse& _return, const  ::rpc::master::GetRequest& getRequest) {
         // Your implementation goes here
         std::cout << "Get begin" << std::endl;
-        std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
+        auto mysql_client_iterator = MysqlClientPool::get()->getClient();
+        auto mysql_client = *mysql_client_iterator;
         std::string value = mysql_client->get(getRequest.key);
         if (value == "") {
             _return.message = "fail";
@@ -71,12 +77,16 @@ public:
         }
         std::cout << "Get " << _return.message << std::endl;
         std::cout << std::endl;
+        MysqlClientPool::get()->delClient(mysql_client_iterator);
     }
     
     void Set(::rpc::master::SetResponse& _return, const  ::rpc::master::SetRequest& setRequest) {
         // Your implementation goes here
         std::cout << "Set key=" << setRequest.key << " value=" + setRequest.value << " begin" << std::endl;
-        std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
+    
+        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
+        auto mysql_client_iterator = MysqlClientPool::get()->getClient();
+        auto mysql_client = *mysql_client_iterator;
         mysql_client->begin();
         _return.connection_id = 1;
         if (mysql_client->put(setRequest.key, setRequest.value)) {
@@ -84,16 +94,23 @@ public:
         } else {
             _return.message = "success";
         }
+        
         ConId_Client_map[1] = mysql_client;
-        mysql_client.reset();
+        ConId_Iterator_map[1] = mysql_client_iterator;
+        
         std::cout << "Set " << _return.message << std::endl;
-        std::cout << std::endl;
+        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
+    
+//        sleep(10);
     }
     
     void Del(::rpc::master::DelResponse& _return, const  ::rpc::master::DelRequest& delRequest) {
         // Your implementation goes here
         std::cout << "Del key=" + delRequest.key + " begin" << std::endl;
-        std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
+    
+        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
+        auto mysql_client_iterator = MysqlClientPool::get()->getClient();
+        auto mysql_client = *mysql_client_iterator;
         mysql_client->begin();
         _return.connection_id = 1;
         if (mysql_client->del(delRequest.key)) {
@@ -101,31 +118,47 @@ public:
         } else {
             _return.message = "success";
         }
+        
         ConId_Client_map[1] = mysql_client;
-        mysql_client.reset();
+        ConId_Iterator_map[1] = mysql_client_iterator;
+        
         std::cout << "Del " << _return.message << std::endl;
-        std::cout << std::endl;
+    
+        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
+    
+//        sleep(10);
     }
     
     void Finish(FinishResponse& _return, const FinishRequest& finishRequest) {
         // Your implementation goes here
+        std::cout << "finish begin" << std::endl;
         std::cout << finishRequest.call_func << " " << finishRequest.connection_id << std::endl;
+        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
         if (!ConId_Client_map.count(finishRequest.connection_id)) {
             _return.message = "fail";
             std::cout << "finish " << _return.message << std::endl;
             std::cout << std::endl;
             return;
         }
-        std::shared_ptr<MysqlClient> mysql_client = ConId_Client_map[finishRequest.connection_id];
+        
+        auto mysql_client_iterator = ConId_Iterator_map[finishRequest.connection_id];
+        auto mysql_client = *mysql_client_iterator;
+        
         if (mysql_client->exec(finishRequest.call_func)) {
             _return.message = "fail";
         } else {
             _return.message = "success";
         }
-        ConId_Client_map[finishRequest.connection_id].reset();
+        
         ConId_Client_map.erase(finishRequest.connection_id);
+        ConId_Iterator_map.erase(finishRequest.connection_id);
+        
         std::cout << "finish " << _return.message << std::endl;
+        MysqlClientPool::get()->delClient(mysql_client_iterator);
+        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
         std::cout << std::endl;
+    
+//        sleep(10);
     }
     
 };
@@ -137,7 +170,7 @@ int main(int argc, char **argv) {
     ::apache::thrift::stdcxx::shared_ptr<TNonblockingServerSocket> serverTransport(new TNonblockingServerSocket(port));
     ::apache::thrift::stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
     ::apache::thrift::stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(15);
-    ::apache::thrift::stdcxx::shared_ptr<PosixThreadFactory> threadFactory(new PosixThreadFactory());
+    ::apache::thrift::stdcxx::shared_ptr<PlatformThreadFactory> threadFactory(new PlatformThreadFactory());
     
     threadManager->threadFactory(threadFactory);
     threadManager->start();

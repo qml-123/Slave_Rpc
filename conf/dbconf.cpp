@@ -10,5 +10,5 @@ namespace rpc {namespace conf {namespace db {
     std::string MysqlConf::table_name = "infoTable";
     std::string MysqlConf::user_name = "root";
     std::string MysqlConf::password = "qml6812015";
-    
+    int MysqlConf::mysql_client_count = 10;
 }}}
