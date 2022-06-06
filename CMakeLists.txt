@@ -49,3 +49,7 @@ target_link_libraries(slave_server rpc ${LIB_LIB})
 add_executable(threadgroup_test thread/threadgroup_test.cpp)
 add_dependencies(threadgroup_test rpc)
 target_link_libraries(threadgroup_test rpc ${LIB_LIB})
+
+add_executable(master_client client/master_client.cpp)
+add_dependencies(master_client rpc)
+target_link_libraries(master_client rpc ${LIB_LIB})
