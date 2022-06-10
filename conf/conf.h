@@ -33,7 +33,9 @@
 
 void Backtrace(std::vector<std::string>& bt, int size, int skip);
 std::string BacktraceToString(int size, int skip, const std::string& prefix);
+
 pid_t GetThreadId();
 
+bool is_insert(std::string func_call);
 void print(const std::string& st);
 #endif //MASTER_RPC_CONF_H

@@ -129,9 +129,10 @@ void swap(GetResponse &a, GetResponse &b);
 std::ostream& operator<<(std::ostream& out, const GetResponse& obj);
 
 typedef struct _SetRequest__isset {
-  _SetRequest__isset() : key(false), value(false) {}
+  _SetRequest__isset() : key(false), value(false), func_call(false) {}
   bool key :1;
   bool value :1;
+  bool func_call :1;
 } _SetRequest__isset;
 
 class SetRequest : public virtual ::apache::thrift::TBase {
@@ -139,12 +140,13 @@ class SetRequest : public virtual ::apache::thrift::TBase {
 
   SetRequest(const SetRequest&);
   SetRequest& operator=(const SetRequest&);
-  SetRequest() : key(), value() {
+  SetRequest() : key(), value(), func_call() {
   }
 
   virtual ~SetRequest() throw();
   std::string key;
   std::string value;
+  std::string func_call;
 
   _SetRequest__isset __isset;
 
@@ -152,11 +154,15 @@ class SetRequest : public virtual ::apache::thrift::TBase {
 
   void __set_value(const std::string& val);
 
+  void __set_func_call(const std::string& val);
+
   bool operator == (const SetRequest & rhs) const
   {
     if (!(key == rhs.key))
       return false;
     if (!(value == rhs.value))
+      return false;
+    if (!(func_call == rhs.func_call))
       return false;
     return true;
   }

@@ -21,7 +21,6 @@ void Backtrace(std::vector<std::string>& bt, int size, int skip) {
         std::cout << "Backtrace_symbols error" << std::endl;
         free(strings);
         free(array);
-        
         return;
     }
     
@@ -49,4 +48,11 @@ pid_t GetThreadId() {
 void print(const std::string& st) {
     std::cout << "thread_id=" + std::to_string(GetThreadId()) +
         " thread_name=" + ::rpc::thread::Thread::GetName() + " " + st << std::endl;
+}
+
+bool is_insert(std::string func_call) {
+    if (func_call == "insert") {
+        return true;
+    }
+    return false;
 }

@@ -55,8 +55,8 @@ namespace rpc {namespace db{
         
         class MysqlClient : public Mysql_Base {
         public:
-            int check_key(std::string key);           //1 就绪  0不就绪，无法操作
-            int put(std::string key, std::string value);
+            int check_key(std::string key);           //1 存在  0不存在
+            int put(std::string key, std::string value, std::string func_call);
             std::string get(std::string key);
             int del(std::string key);
         };

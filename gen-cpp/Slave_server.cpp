@@ -56,7 +56,7 @@ public:
         // Your implementation goes here
         std::cout << "Try begin" << std::endl;
         std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
-        _return.check_key = mysql_client->check_key(tryRequest.key);
+        _return.check_key = (bool)mysql_client->check_key(tryRequest.key);
         std::cout << "Try, key=" << (tryRequest.key) << " " << (_return.check_key ? "exist" : "not exist") << std::endl;
         std::cout << std::endl;
         
@@ -89,7 +89,8 @@ public:
         auto mysql_client = *mysql_client_iterator;
         mysql_client->begin();
         _return.connection_id = 1;
-        if (mysql_client->put(setRequest.key, setRequest.value)) {
+        
+        if (mysql_client->put(setRequest.key, setRequest.value, setRequest.func_call)) {
             _return.message = "fail";
         } else {
             _return.message = "success";

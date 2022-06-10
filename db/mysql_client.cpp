@@ -60,14 +60,17 @@ namespace rpc {namespace db {
             mysql_close(&con);
         }
         
-        int MysqlClient::put(std::string key, std::string value) {
-            std::string sql = "INSERT INTO infoTable(k, v) VALUES('" + key + "','" + value + "')";
-            
+        int MysqlClient::put(std::string key, std::string value, std::string func_call) {
+            std::string sql;
+            if (is_insert(func_call)) {
+                sql = "INSERT INTO infoTable(k, v) VALUES('" + key + "','" + value + "')";
+            } else {
+                sql = "UPDATE infoTable v=" + value + "where k=" + key;
+            }
             if (query(sql)) {
                 std::cout << "exec sql=" + sql + " err" << std::endl;
                 return 1;
             }
-            
             return 0;
         }
         
