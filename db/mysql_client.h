@@ -4,7 +4,7 @@
 
 #ifndef MASTER_RPC_MYSQL_H
 #define MASTER_RPC_MYSQL_H
-#include "../conf/dbconf.h"
+#include "conf/dbconf.h"
 #include <mysql/mysql.h>
 
 namespace rpc {namespace db{
@@ -55,7 +55,7 @@ namespace rpc {namespace db{
         
         class MysqlClient : public Mysql_Base {
         public:
-            int check_key(std::string key);           //1 存在  0不存在
+            bool check_key(std::string key);           //1 存在  0不存在
             int put(std::string key, std::string value, std::string func_call);
             std::string get(std::string key);
             int del(std::string key);

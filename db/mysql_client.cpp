@@ -3,7 +3,7 @@
 //
 
 #include "mysql_client.h"
-#include "../conf/conf.h"
+#include "conf/conf.h"
 #include <mysql/mysql.h>
 using namespace ::rpc::conf::db;
 
@@ -65,7 +65,7 @@ namespace rpc {namespace db {
             if (is_insert(func_call)) {
                 sql = "INSERT INTO infoTable(k, v) VALUES('" + key + "','" + value + "')";
             } else {
-                sql = "UPDATE infoTable v=" + value + "where k=" + key;
+                sql = "UPDATE infoTable SET v='" + value + "' where k='" + key + "'";
             }
             if (query(sql)) {
                 std::cout << "exec sql=" + sql + " err" << std::endl;
@@ -99,7 +99,7 @@ namespace rpc {namespace db {
             return 0;
         }
         
-        int MysqlClient::check_key(std::string key) {  //后续加锁
+        bool MysqlClient::check_key(std::string key) {  //后续加锁
             return this->get(key) != "";
         }
         

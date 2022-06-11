@@ -3,7 +3,7 @@
 //
 
 #include "threadpool.h"
-#include "../conf/conf.h"
+#include "conf/conf.h"
 #include "thread.h"
 
 namespace rpc {namespace thread{

@@ -5,7 +5,7 @@
 #ifndef SLAVE_RPC_MYSQL_CLIENT_POOL_H
 #define SLAVE_RPC_MYSQL_CLIENT_POOL_H
 
-#include "../conf/client_pool.h"
+#include "conf/client_pool.h"
 #include "mysql_client.h"
 
 using namespace ::rpc::conf;

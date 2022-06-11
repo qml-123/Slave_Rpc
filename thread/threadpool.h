@@ -8,7 +8,7 @@
 #include "noncopyable.h"
 #include "mutex.h"
 #include "thread.h"
-#include "../conf/conf.h"
+#include "conf/conf.h"
 #include <functional>
 #include <vector>
 #include <iostream>

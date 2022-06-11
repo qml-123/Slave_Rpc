@@ -29,6 +29,13 @@ set(LIB_SRC
         thread/thread.cpp
         thread/threadpool.cpp
         thread/threadgroup.cpp
+        log/elog_utils.cpp
+        log/elog_port.cpp
+        log/elog_file_port.cpp
+        log/elog_file.cpp
+        log/elog_buf.cpp
+        log/elog_async.cpp
+        log/elog.cpp
         )
 
 add_library(rpc SHARED ${LIB_SRC})

@@ -6,8 +6,8 @@
 #define SLAVE_RPC_DBCLIENTPOOL_H
 
 #include "mysql_client.h"
-#include "../thread/mutex.h"
-#include "../conf/dbconf.h"
+#include "thread/mutex.h"
+#include "conf/dbconf.h"
 #include <list>
 #include <memory>
 #include <algorithm>

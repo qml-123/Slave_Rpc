@@ -12,7 +12,7 @@
 #include <sstream>
 #include <execinfo.h>
 #include <unistd.h>
-#include "../thread/thread.h"
+#include "thread/thread.h"
 
 #define QML_ASSERT(x) \
 	if(!(x)) { \

@@ -2,9 +2,10 @@
 // You should copy it to another filename to avoid overwriting it.
 
 #include "Slave.h"
-#include "../db/mysql_rsync.h"
-#include "../db/mysql_client.h"
-#include "../db/mysql_client_pool.h"
+#include "db/mysql_rsync.h"
+#include "db/mysql_client.h"
+#include "db/mysql_client_pool.h"
+#include "log/elog.h"
 #include <iostream>
 #include <memory>
 #include <map>
@@ -46,26 +47,24 @@ public:
     
     void Rsync(RsyncResponse& _return, const RsyncRequest& RsyncRequest) {
         // Your implementation goes here
-        printf("Rsync\n");
+        log_i("Rsync init");
         mysql_rsync::set_sql(RsyncRequest.sql_file, RsyncRequest.database);
         _return.message = "success";
+        log_i("Rsync success");
     }
 
     //这里写两阶段提交的准备阶段
     void Try(TryResponse& _return, const TryRequest& tryRequest) {
         // Your implementation goes here
-        std::cout << "Try begin" << std::endl;
+        log_i("Try begin");
         std::shared_ptr<MysqlClient> mysql_client(new MysqlClient);
-        _return.check_key = (bool)mysql_client->check_key(tryRequest.key);
-        std::cout << "Try, key=" << (tryRequest.key) << " " << (_return.check_key ? "exist" : "not exist") << std::endl;
-        std::cout << std::endl;
-        
-//        sleep(10);
+        _return.check_key = (mysql_client->check_key(tryRequest.key));
+        log_i(("Try, key(" + (tryRequest.key) + ") " + (_return.check_key ? "exist" : "not exist")).c_str());
     }
     
     void Get(::rpc::master::GetResponse& _return, const  ::rpc::master::GetRequest& getRequest) {
         // Your implementation goes here
-        std::cout << "Get begin" << std::endl;
+        log_i("Get begin");
         auto mysql_client_iterator = MysqlClientPool::get()->getClient();
         auto mysql_client = *mysql_client_iterator;
         std::string value = mysql_client->get(getRequest.key);
@@ -75,16 +74,17 @@ public:
             _return.message = "success";
             _return.value = value;
         }
-        std::cout << "Get " << _return.message << std::endl;
+        log_i(("Get " + _return.message).c_str());
         std::cout << std::endl;
         MysqlClientPool::get()->delClient(mysql_client_iterator);
+        sleep(10);
     }
     
     void Set(::rpc::master::SetResponse& _return, const  ::rpc::master::SetRequest& setRequest) {
         // Your implementation goes here
-        std::cout << "Set key=" << setRequest.key << " value=" + setRequest.value << " begin" << std::endl;
+        log_i(("Set key=" + setRequest.key + " value=" + setRequest.value + " begin").c_str());
     
-        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
+        log_i(("free_count: " + std::to_string(MysqlClientPool::get()->free_count())).c_str());
         auto mysql_client_iterator = MysqlClientPool::get()->getClient();
         auto mysql_client = *mysql_client_iterator;
         mysql_client->begin();
@@ -98,18 +98,18 @@ public:
         
         ConId_Client_map[1] = mysql_client;
         ConId_Iterator_map[1] = mysql_client_iterator;
-        
-        std::cout << "Set " << _return.message << std::endl;
-        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
+    
+        log_i(("Set key(" + setRequest.key + ") " + _return.message).c_str());
+        log_i(("free_count: " + std::to_string(MysqlClientPool::get()->free_count())).c_str());
     
 //        sleep(10);
     }
     
     void Del(::rpc::master::DelResponse& _return, const  ::rpc::master::DelRequest& delRequest) {
         // Your implementation goes here
-        std::cout << "Del key=" + delRequest.key + " begin" << std::endl;
+        log_i(("Del key=" + delRequest.key + " begin").c_str());
     
-        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
+        log_i(("free_count: " + std::to_string(MysqlClientPool::get()->free_count())).c_str());
         auto mysql_client_iterator = MysqlClientPool::get()->getClient();
         auto mysql_client = *mysql_client_iterator;
         mysql_client->begin();
@@ -122,23 +122,22 @@ public:
         
         ConId_Client_map[1] = mysql_client;
         ConId_Iterator_map[1] = mysql_client_iterator;
-        
-        std::cout << "Del " << _return.message << std::endl;
     
-        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
+        log_i(("Del key(" + delRequest.key + ") " + _return.message).c_str());
+    
+        log_i(("free_count: " + std::to_string(MysqlClientPool::get()->free_count())).c_str());
     
 //        sleep(10);
     }
     
     void Finish(FinishResponse& _return, const FinishRequest& finishRequest) {
         // Your implementation goes here
-        std::cout << "finish begin" << std::endl;
-        std::cout << finishRequest.call_func << " " << finishRequest.connection_id << std::endl;
-        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
+        log_i("finish begin");
+        log_i((finishRequest.call_func + " " + std::to_string(finishRequest.connection_id)).c_str());
+        log_i(("free_count: " + std::to_string(MysqlClientPool::get()->free_count())).c_str());
         if (!ConId_Client_map.count(finishRequest.connection_id)) {
             _return.message = "fail";
-            std::cout << "finish " << _return.message << std::endl;
-            std::cout << std::endl;
+            log_w(("finish " + _return.message).c_str());
             return;
         }
         
@@ -153,11 +152,10 @@ public:
         
         ConId_Client_map.erase(finishRequest.connection_id);
         ConId_Iterator_map.erase(finishRequest.connection_id);
-        
-        std::cout << "finish " << _return.message << std::endl;
+    
+        log_i(("finish " + _return.message).c_str());
         MysqlClientPool::get()->delClient(mysql_client_iterator);
-        std::cout << "free_count: " << std::to_string(MysqlClientPool::get()->free_count()) << std::endl;
-        std::cout << std::endl;
+        log_i(("free_count: " + std::to_string(MysqlClientPool::get()->free_count())).c_str());
     
 //        sleep(10);
     }
@@ -165,6 +163,17 @@ public:
 };
 
 int main(int argc, char **argv) {
+    //log init
+    setbuf(stdout, NULL);
+    elog_init();
+    elog_set_fmt(ELOG_LVL_ASSERT, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+    elog_set_fmt(ELOG_LVL_ERROR, ELOG_FMT_ALL);
+    elog_set_fmt(ELOG_LVL_WARN, ELOG_FMT_ALL);
+    elog_set_fmt(ELOG_LVL_INFO, ELOG_FMT_ALL);
+    elog_set_fmt(ELOG_LVL_DEBUG, ELOG_FMT_ALL & ~ELOG_FMT_FUNC);
+    elog_set_fmt(ELOG_LVL_VERBOSE, ELOG_FMT_ALL & ~ELOG_FMT_FUNC);
+    elog_start();
+    
     int port = 9091;
     ::apache::thrift::stdcxx::shared_ptr<SlaveHandler> handler(new SlaveHandler());
     ::apache::thrift::stdcxx::shared_ptr<TProcessor> processor(new SlaveProcessor(handler));

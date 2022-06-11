@@ -3,7 +3,7 @@
 //
 
 #include "threadgroup.h"
-#include "../conf/conf.h"
+#include "conf/conf.h"
 #include "thread.h"
 
 void fun1(void* xx, const void* yy) {

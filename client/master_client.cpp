@@ -1,4 +1,4 @@
-#include "../gen-cpp/Master.h"
+#include "gen-cpp/Master.h"
 #include <iostream>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TBufferTransports.h>
