@@ -35,7 +35,7 @@ using namespace ::apache::thrift::concurrency;
 using namespace ::rpc::db;
 using namespace ::rpc::slave;
 
-std::unordered_map<long long, std::shared_ptr<MysqlClient>> ConId_Client_map;
+std::map<long long, std::shared_ptr<MysqlClient>> ConId_Client_map;
 std::map<long long, std::list<std::shared_ptr<MysqlClient>>::iterator > ConId_Iterator_map;
 
 //slave
@@ -175,16 +175,36 @@ int main(int argc, char **argv) {
     elog_start();
     
     int port = 9091;
+//    ::apache::thrift::stdcxx::shared_ptr<SlaveHandler> handler(new SlaveHandler());
+//    ::apache::thrift::stdcxx::shared_ptr<TProcessor> processor(new SlaveProcessor(handler));
+//    ::apache::thrift::stdcxx::shared_ptr<TServerTransport> serverSocket(new TServerSocket(port));
+//    ::apache::thrift::stdcxx::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+//    ::apache::thrift::stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+//    ::apache::thrift::stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(15);
+//    ::apache::thrift::stdcxx::shared_ptr<PosixThreadFactory> threadFactory(new PosixThreadFactory());
+//
+//    threadManager->threadFactory(threadFactory);
+//    threadManager->start();
+//
+//    TThreadPoolServer server(processor,
+//                             serverSocket,
+//                             transportFactory,
+//                             protocolFactory,
+//                             threadManager);
+//
+//    server.serve();
+
+    
     ::apache::thrift::stdcxx::shared_ptr<SlaveHandler> handler(new SlaveHandler());
     ::apache::thrift::stdcxx::shared_ptr<TProcessor> processor(new SlaveProcessor(handler));
     ::apache::thrift::stdcxx::shared_ptr<TNonblockingServerSocket> serverTransport(new TNonblockingServerSocket(port));
     ::apache::thrift::stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
     ::apache::thrift::stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(15);
-    ::apache::thrift::stdcxx::shared_ptr<PlatformThreadFactory> threadFactory(new PlatformThreadFactory());
-    
+    ::apache::thrift::stdcxx::shared_ptr<PosixThreadFactory> threadFactory(new PosixThreadFactory());
+
     threadManager->threadFactory(threadFactory);
     threadManager->start();
-    
+
     TNonblockingServer server(processor, protocolFactory, serverTransport, threadManager);
     server.setNumIOThreads(5);//设置处理连接请求线程数
     server.serve();

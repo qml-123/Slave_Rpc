@@ -46,7 +46,7 @@ namespace rpc{namespace thread{
         private:
             sem_t m_semaphore;
         };
-
+        
 /**
  * @brief 局部锁的模板实现
  */
@@ -231,6 +231,108 @@ namespace rpc{namespace thread{
             }
         private:
             /// mutex
+            pthread_mutex_t m_mutex;
+        };
+        
+        template<class T>
+        struct ScopedCondImpl {
+        public:
+            /**
+             * @brief 构造函数
+             * @param[in] mutex Mutex
+             */
+            ScopedCondImpl(T& cond)
+                    :m_cond(cond) {
+                m_cond.lock();
+                m_locked = true;
+            }
+            
+            /**
+             * @brief 析构函数,自动释放锁
+             */
+            ~ScopedCondImpl() {
+                unlock();
+            }
+            
+            /**
+             * @brief 加锁
+             */
+            void lock() {
+                if(!m_locked) {
+                    m_cond.lock();
+                    m_locked = true;
+                }
+            }
+            
+            /**
+             * @brief 解锁
+             */
+            void unlock() {
+                if(m_locked) {
+                    m_cond.unlock();
+                    m_locked = false;
+                }
+            }
+            
+            void wait() {
+                m_locked = false;
+                m_cond.wait();
+            }
+            
+            void notify() {
+                m_cond.notify();
+            }
+            
+            void notify_all() {
+                m_cond.notify_all();
+            }
+            
+        private:
+            ///
+            T& m_cond;
+            /// 是否已上锁
+            bool m_locked;
+        };
+        
+        
+        /**
+ * @brief 条件变量
+ */
+        class Condition: Noncopyable {
+        public:
+            typedef ScopedCondImpl<Condition> Cond;
+            
+            Condition() {
+                pthread_cond_init(&(m_cond), nullptr);
+                pthread_mutex_init(&m_mutex, nullptr);
+            }
+            
+            ~Condition() {
+                pthread_cond_destroy(&m_cond);
+                pthread_mutex_destroy(&m_mutex);
+            }
+            void notify() {
+                pthread_cond_signal(&m_cond);
+            }
+            
+            void wait() {
+                pthread_cond_wait(&m_cond, &m_mutex);
+            }
+            
+            void notify_all() {
+                pthread_cond_broadcast(&m_cond);
+            }
+            
+            void lock() {
+                pthread_mutex_lock(&m_mutex);
+            }
+            
+            void unlock() {
+                pthread_mutex_unlock(&m_mutex);
+            }
+            
+        private:
+            pthread_cond_t m_cond;
             pthread_mutex_t m_mutex;
         };
 

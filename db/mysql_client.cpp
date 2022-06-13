@@ -4,6 +4,7 @@
 
 #include "mysql_client.h"
 #include "conf/conf.h"
+#include "log/elog.h"
 #include <mysql/mysql.h>
 using namespace ::rpc::conf::db;
 
@@ -11,7 +12,6 @@ namespace rpc {namespace db {
         Mysql_Base::Mysql_Base() {
             mysql_init(&con);
             if (!connect()) {
-                std::cout << "connection success" << std::endl;
             } else {
                 QML_ASSERT2(false, "mysql_real_connect error");
             }
@@ -75,7 +75,7 @@ namespace rpc {namespace db {
         }
         
         std::string MysqlClient::get(std::string key) {
-            std::cout << "get key=" << key << std::endl;
+            log_i(("get key=" + key).c_str());
             std::string sql = "SELECT v FROM infoTable WHERE k='" + key + "'";
             if (query(sql)) {
                 std::cout << "exec sql=" + sql + " err" << std::endl;
@@ -83,7 +83,7 @@ namespace rpc {namespace db {
             }
             mysql_res res(get_con());
             if (res.get_next_row()) {
-                std::cout << "key=" + key + " is not exists" << std::endl;
+                log_i(("key=" + key + " is not exists").c_str());
                 return "";
             }
             

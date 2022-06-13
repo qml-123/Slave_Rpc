@@ -8,12 +8,13 @@
 #include "noncopyable.h"
 #include "mutex.h"
 #include "thread.h"
-#include "conf/conf.h"
+#include "../conf/conf.h"
 #include <functional>
 #include <vector>
 #include <iostream>
 #include <atomic>
 #include <queue>
+#include <condition_variable>
 
 namespace rpc{namespace thread{
         class ThreadPool : Noncopyable{
@@ -21,21 +22,26 @@ namespace rpc{namespace thread{
             struct ThreadTask {
                 //执行函数
                 std::function<void(void*, const void*)> cb;
-                //thread id
+                //Thread id
                 int thread;
                 const void* request;
                 void* response;
+    
+                ThreadTask(std::function<void(void*, const void*)> f, int thr)
+                        : cb(f), thread(thr), request(nullptr), response(nullptr) {
+        
+                }
                 
                 ThreadTask(std::function<void(void*, const void*)> f, int thr, const void* _request, void* _response)
                         : cb(f), thread(thr), request(_request), response(_response) {
-            
+                    
                 }
-        
+                
                 ThreadTask()
                         : thread(-1), request(nullptr), response(nullptr) {
                 }
             };
-            
+        
         public:
             typedef std::shared_ptr<ThreadPool> ptr;
             typedef Mutex MutexType;
@@ -48,31 +54,25 @@ namespace rpc{namespace thread{
             
             static ThreadPool* GetThis();
             
-            virtual void start();
+            void start();
             
-            virtual void stop();
-    
-            virtual void addTask(ThreadTask threadTask) {m_taskQueue.push(threadTask); m_taskCount++; tickle(); }
-    
+            void stop();
+            
+            void addTask(ThreadTask threadTask);
+            
             bool hasIdleThreads() {return m_idleThreadCount > 0;}
             
+            bool hasTaskCount() {return m_taskCount > 0; }
+            
         protected:
-            /*
-             *  通知任务到达
-             */
-            virtual void tickle();
             
-            //调度
-            virtual void run();
-            
+            void run();
             
             //是否可以停止
-            virtual bool stopping() {return m_stopping; }
+            bool stopping() {return m_stopping; }
             
             
             void setThis();
-            
-            bool hasTaskCount() {return m_taskCount > 0; }
             
             ThreadTask getTask() {
                 ThreadTask ret = m_taskQueue.front();
@@ -80,12 +80,10 @@ namespace rpc{namespace thread{
                 m_taskCount--;
                 return ret;
             }
-            //idle thread count 空闲
+            //idle Thread count 空闲
             std::atomic<size_t> m_idleThreadCount = {0};
-            
+        
         private:
-            // mutex
-            MutexType m_mutex;
             //线程池
             std::vector<Thread::ptr> m_threads;
             //task queue
@@ -93,7 +91,7 @@ namespace rpc{namespace thread{
             
             std::string m_name;
             
-            //thread id
+            //Thread id
             std::vector<int> m_threadIds;
             
             Thread::ptr m_rootThread;
@@ -105,9 +103,12 @@ namespace rpc{namespace thread{
             bool m_stopping = true;
             //主线程id
             int m_rootThreadId = 0;
+            
+            Condition m_cond;
         };
     }
 }
+
 
 
 #endif //MASTER_RPC_THREADPOOL_H

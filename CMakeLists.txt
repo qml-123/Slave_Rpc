@@ -60,3 +60,7 @@ target_link_libraries(threadgroup_test rpc ${LIB_LIB})
 add_executable(master_client client/master_client.cpp)
 add_dependencies(master_client rpc)
 target_link_libraries(master_client rpc ${LIB_LIB})
+
+add_executable(thread_test thread/thread_test.cpp)
+add_dependencies(thread_test rpc)
+target_link_libraries(thread_test rpc ${LIB_LIB})

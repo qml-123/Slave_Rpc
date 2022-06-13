@@ -26,7 +26,7 @@ namespace rpc {namespace db {
     }
     
     void mysql_rsync::set_sql(std::string sql_command, std::string file_name) {
-        file_name = "temp/" + file_name;
+        file_name = "../temp/" + file_name;
         std::ofstream outfile;
         outfile.open(file_name);
         outfile << sql_command;
