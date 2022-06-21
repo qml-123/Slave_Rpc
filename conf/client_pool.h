@@ -6,9 +6,9 @@
 #define SLAVE_RPC_CLIENT_POOL_H
 
 
-#include "thread/mutex.h"
 #include "thread/noncopyable.h"
 #include "dbconf.h"
+#include "thread/mutex.h"
 #include <list>
 #include <memory>
 #include <algorithm>

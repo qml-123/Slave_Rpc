@@ -1,10 +1,15 @@
 include "master.thrift"
 namespace cpp rpc.slave
 
+struct Sql {
+    1: string command,
+    2: string key,
+    3: string value,
+}
+
 struct RsyncRequest {
-    1: string database,
-    2: string sql_file,
-    3: string message,
+    1: list<Sql> sql,
+    2: string message,
 }
 
 struct RsyncResponse {

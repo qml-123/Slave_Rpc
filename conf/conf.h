@@ -12,29 +12,7 @@
 #include <sstream>
 #include <execinfo.h>
 #include <unistd.h>
-#include "thread/thread.h"
 
-#define QML_ASSERT(x) \
-	if(!(x)) { \
-		std::cout << "ASSERTION: " #x\
-			<< "\nbacktrace:\n" \
-			<< BacktraceToString(100, 2, "    ") << std::endl; \
-		assert(x); \
-	}
-
-#define QML_ASSERT2(x, w) \
-	if(!(x)) { \
-		std::cout << "ASSERTION: " #x\
-			<< "\n" << w \
-			<< "\nbacktrace:\n" \
-			<< BacktraceToString(100, 2, "    ") << std::endl; \
-		assert(x); \
-	}
-
-void Backtrace(std::vector<std::string>& bt, int size, int skip);
-std::string BacktraceToString(int size, int skip, const std::string& prefix);
-
-pid_t GetThreadId();
 
 bool is_insert(std::string func_call);
 void print(const std::string& st);

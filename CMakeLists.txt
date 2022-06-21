@@ -25,10 +25,6 @@ set(LIB_SRC
         db/mysql_rsync.cpp
         conf/conf.cpp
         conf/dbconf.cpp
-        thread/mutex.cpp
-        thread/thread.cpp
-        thread/threadpool.cpp
-        thread/threadgroup.cpp
         log/elog_utils.cpp
         log/elog_port.cpp
         log/elog_file_port.cpp
@@ -52,15 +48,3 @@ set(LIB_LIB
 add_executable(slave_server gen-cpp/Slave_server.cpp)
 add_dependencies(slave_server rpc)
 target_link_libraries(slave_server rpc ${LIB_LIB})
-
-add_executable(threadgroup_test thread/threadgroup_test.cpp)
-add_dependencies(threadgroup_test rpc)
-target_link_libraries(threadgroup_test rpc ${LIB_LIB})
-
-add_executable(master_client client/master_client.cpp)
-add_dependencies(master_client rpc)
-target_link_libraries(master_client rpc ${LIB_LIB})
-
-add_executable(thread_test thread/thread_test.cpp)
-add_dependencies(thread_test rpc)
-target_link_libraries(thread_test rpc ${LIB_LIB})

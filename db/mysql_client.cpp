@@ -13,7 +13,7 @@ namespace rpc {namespace db {
             mysql_init(&con);
             if (!connect()) {
             } else {
-                QML_ASSERT2(false, "mysql_real_connect error");
+                log_e("mysql_real_connect error");
             }
             mysql_autocommit(&con,0);
         }
@@ -23,10 +23,12 @@ namespace rpc {namespace db {
         }
         
         int Mysql_Base::query(std::string sql) {
+            log_i(("exec " + sql).c_str());
             return mysql_query(&con, sql.c_str());
         }
         
         int Mysql_Base::begin() {
+            log_i("begin;");
             return query("BEGIN;");
         }
         
@@ -53,6 +55,7 @@ namespace rpc {namespace db {
         }
         
         int Mysql_Base::commit() {
+            log_i("commit;");
             return query("COMMIT;");
         }
         

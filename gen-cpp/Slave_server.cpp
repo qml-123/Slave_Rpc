@@ -13,13 +13,8 @@
 #include <unordered_map>
 #include <thrift/protocol/TBinaryProtocol.h>
 
-#include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TNonblockingServer.h>
-#include <thrift/server/TThreadPoolServer.h>
-#include <thrift/server/TThreadedServer.h>
 
-#include <thrift/transport/TServerSocket.h>
-#include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TNonblockingServerSocket.h>
 
 #include <thrift/concurrency/ThreadManager.h>
@@ -45,10 +40,10 @@ public:
         // Your initialization goes here
     }
     
-    void Rsync(RsyncResponse& _return, const RsyncRequest& RsyncRequest) {
+    void Rsync(RsyncResponse& _return, const RsyncRequest& rsyncRequest) {
         // Your implementation goes here
         log_i("Rsync init");
-        mysql_rsync::set_sql(RsyncRequest.sql_file, RsyncRequest.database);
+//        mysql_rsync::set_sql(rsyncRequest., rsyncRequest.database);
         _return.message = "success";
         log_i("Rsync success");
     }
@@ -77,7 +72,7 @@ public:
         log_i(("Get " + _return.message).c_str());
         std::cout << std::endl;
         MysqlClientPool::get()->delClient(mysql_client_iterator);
-        sleep(10);
+//        sleep(10);
     }
     
     void Set(::rpc::master::SetResponse& _return, const  ::rpc::master::SetRequest& setRequest) {
