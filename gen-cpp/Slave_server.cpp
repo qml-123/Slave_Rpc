@@ -43,7 +43,7 @@ public:
     void Rsync(RsyncResponse& _return, const RsyncRequest& rsyncRequest) {
         // Your implementation goes here
         log_i("Rsync init");
-//        mysql_rsync::set_sql(rsyncRequest., rsyncRequest.database);
+        mysql_rsync::set_sql(rsyncRequest., rsyncRequest.database);
         _return.message = "success";
         log_i("Rsync success");
     }
